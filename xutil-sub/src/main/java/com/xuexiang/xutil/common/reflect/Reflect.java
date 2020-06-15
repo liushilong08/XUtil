@@ -329,7 +329,7 @@ public final class Reflect {
 	 * @return A map containing field names and wrapped values.
 	 */
 	public Map<String, Reflect> fields() {
-		Map<String, Reflect> result = new LinkedHashMap<String, Reflect>();
+		Map<String, Reflect> result = new LinkedHashMap<>();
 		Class<?> t = type();
 
 		do {
@@ -337,8 +337,9 @@ public final class Reflect {
 				if (type != object ^ Modifier.isStatic(field.getModifiers())) {
 					String name = field.getName();
 
-					if (!result.containsKey(name))
+					if (!result.containsKey(name)) {
 						result.put(name, field(name));
+					}
 				}
 			}
 
@@ -644,11 +645,13 @@ public final class Reflect {
 	private boolean match(Class<?>[] declaredTypes, Class<?>[] actualTypes) {
 		if (declaredTypes.length == actualTypes.length) {
 			for (int i = 0; i < actualTypes.length; i++) {
-				if (actualTypes[i] == NULL.class)
+				if (actualTypes[i] == NULL.class) {
 					continue;
+				}
 
-				if (wrapper(declaredTypes[i]).isAssignableFrom(wrapper(actualTypes[i])))
+				if (wrapper(declaredTypes[i]).isAssignableFrom(wrapper(actualTypes[i]))) {
 					continue;
+				}
 
 				return false;
 			}

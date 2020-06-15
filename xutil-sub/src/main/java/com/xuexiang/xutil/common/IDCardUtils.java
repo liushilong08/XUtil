@@ -47,31 +47,31 @@ public final class IDCardUtils {
     /**
      * 省、直辖市代码表
      */
-    public static final String cityCode[] = {"11", "12", "13", "14", "15", "21", "22", "23", "31", "32", "33", "34", "35", "36", "37", "41", "42", "43", "44", "45", "46", "50", "51", "52", "53",
+    public static final String[] cityCode = {"11", "12", "13", "14", "15", "21", "22", "23", "31", "32", "33", "34", "35", "36", "37", "41", "42", "43", "44", "45", "46", "50", "51", "52", "53",
             "54", "61", "62", "63", "64", "65", "71", "81", "82", "91"};
 
     /**
      * 每位加权因子
      */
-    public static final int power[] = {7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2};
+    public static final int[] power = {7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2};
 
     /**
      * 第18位校检码
      */
-    public static final String verifyCode[] = {"1", "0", "X", "9", "8", "7", "6", "5", "4", "3", "2"};
+    public static final String[] verifyCode = {"1", "0", "X", "9", "8", "7", "6", "5", "4", "3", "2"};
     /**
      * 最低年限
      */
     public static final int MIN = 1930;
-    public static Map<String, String> cityCodes = new HashMap<String, String>();
+    public static final Map<String, String> cityCodes = new HashMap<>();
     /**
      * 台湾身份首字母对应数字
      */
-    public static Map<String, Integer> twFirstCode = new HashMap<String, Integer>();
+    public static final Map<String, Integer> twFirstCode = new HashMap<>();
     /**
      * 香港身份首字母对应数字
      */
-    public static Map<String, Integer> hkFirstCode = new HashMap<String, Integer>();
+    public static final Map<String, Integer> hkFirstCode = new HashMap<>();
 
     static {
         cityCodes.put("11", "北京");
@@ -172,8 +172,9 @@ public final class IDCardUtils {
                 e.printStackTrace();
             }
             Calendar cal = Calendar.getInstance();
-            if (birthDate != null)
+            if (birthDate != null) {
                 cal.setTime(birthDate);
+            }
             // 获取出生年(完全表现形式,如：2010)
             String sYear = String.valueOf(cal.get(Calendar.YEAR));
             idCard18 = idCard.substring(0, 6) + sYear + idCard.substring(8);
@@ -246,15 +247,13 @@ public final class IDCardUtils {
                 e.printStackTrace();
             }
             Calendar cal = Calendar.getInstance();
-            if (birthDate != null)
+            if (birthDate != null) {
                 cal.setTime(birthDate);
-            if (!validate(cal.get(Calendar.YEAR), Integer.valueOf(birthCode.substring(2, 4)), Integer.valueOf(birthCode.substring(4, 6)))) {
-                return false;
             }
+            return validate(cal.get(Calendar.YEAR), Integer.parseInt(birthCode.substring(2, 4)), Integer.parseInt(birthCode.substring(4, 6)));
         } else {
             return false;
         }
-        return true;
     }
 
     /**
@@ -277,10 +276,10 @@ public final class IDCardUtils {
             info[0] = "台湾";
             System.out.println("11111");
             String char2 = idCard.substring(1, 2);
-            if (char2.equals("1")) {
+            if ("1".equals(char2)) {
                 info[1] = "M";
                 System.out.println("MMMMMMM");
-            } else if (char2.equals("2")) {
+            } else if ("2".equals(char2)) {
                 info[1] = "F";
                 System.out.println("FFFFFFF");
             } else {
@@ -314,14 +313,14 @@ public final class IDCardUtils {
         String mid = idCard.substring(1, 9);
         String end = idCard.substring(9, 10);
         Integer iStart = twFirstCode.get(start);
-        Integer sum = iStart / 10 + (iStart % 10) * 9;
+        int sum = iStart / 10 + (iStart % 10) * 9;
         char[] chars = mid.toCharArray();
-        Integer iflag = 8;
+        int iflag = 8;
         for (char c : chars) {
-            sum = sum + Integer.valueOf(c + "") * iflag;
+            sum = sum + Integer.parseInt(c + "") * iflag;
             iflag--;
         }
-        return (sum % 10 == 0 ? 0 : (10 - sum % 10)) == Integer.valueOf(end);
+        return (sum % 10 == 0 ? 0 : (10 - sum % 10)) == Integer.parseInt(end);
     }
 
     /**
@@ -339,7 +338,7 @@ public final class IDCardUtils {
      */
     public static boolean validateHKCard(String idCard) {
         String card = idCard.replaceAll("[\\(|\\)]", "");
-        Integer sum = 0;
+        int sum = 0;
         if (card.length() == 9) {
             sum = ((int) card.substring(0, 1).toUpperCase().toCharArray()[0] - 55) * 9 + ((int) card.substring(1, 2).toUpperCase().toCharArray()[0] - 55) * 8;
             card = card.substring(1, 9);
@@ -349,15 +348,15 @@ public final class IDCardUtils {
         String mid = card.substring(1, 7);
         String end = card.substring(7, 8);
         char[] chars = mid.toCharArray();
-        Integer iflag = 7;
+        int iflag = 7;
         for (char c : chars) {
-            sum = sum + Integer.valueOf(c + "") * iflag;
+            sum = sum + Integer.parseInt(c + "") * iflag;
             iflag--;
         }
-        if (end.toUpperCase().equals("A")) {
+        if ("A".equals(end.toUpperCase())) {
             sum = sum + 10;
         } else {
-            sum = sum + Integer.valueOf(end);
+            sum = sum + Integer.parseInt(end);
         }
         return sum % 11 == 0;
     }
@@ -442,6 +441,8 @@ public final class IDCardUtils {
                 break;
             case 0:
                 sCode = "1";
+                break;
+            default:
                 break;
         }
         return sCode;
@@ -528,7 +529,7 @@ public final class IDCardUtils {
      * @return 生日(yyyyMMdd)
      */
     public static String getBirthByIdCard(String idCard) {
-        Integer len = idCard.length();
+        int len = idCard.length();
         if (len < CHINA_ID_MIN_LENGTH) {
             return null;
         } else if (len == CHINA_ID_MIN_LENGTH) {
@@ -544,7 +545,7 @@ public final class IDCardUtils {
      * @return 生日(yyyy)
      */
     public static Short getYearByIdCard(String idCard) {
-        Integer len = idCard.length();
+        int len = idCard.length();
         if (len < CHINA_ID_MIN_LENGTH) {
             return null;
         } else if (len == CHINA_ID_MIN_LENGTH) {
@@ -560,7 +561,7 @@ public final class IDCardUtils {
      * @return 生日(MM)
      */
     public static Short getMonthByIdCard(String idCard) {
-        Integer len = idCard.length();
+        int len = idCard.length();
         if (len < CHINA_ID_MIN_LENGTH) {
             return null;
         } else if (len == CHINA_ID_MIN_LENGTH) {
@@ -576,7 +577,7 @@ public final class IDCardUtils {
      * @return 生日(dd)
      */
     public static Short getDayByIdCard(String idCard) {
-        Integer len = idCard.length();
+        int len = idCard.length();
         if (len < CHINA_ID_MIN_LENGTH) {
             return null;
         } else if (len == CHINA_ID_MIN_LENGTH) {

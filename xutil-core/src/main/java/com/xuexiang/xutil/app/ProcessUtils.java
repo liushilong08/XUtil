@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 xuexiangjys(xuexiangjys@163.com)
+ * Copyright (C) 2020 xuexiangjys(xuexiangjys@163.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.xuexiang.xutil.app;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.app.usage.UsageStats;
@@ -25,9 +27,11 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Build;
 import android.os.Process;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.RequiresPermission;
 
 import com.xuexiang.xutil.XUtil;
@@ -63,11 +67,14 @@ public final class ProcessUtils {
      *
      * @return 前台应用包名
      */
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @RequiresPermission(PACKAGE_USAGE_STATS)
     public static String getForegroundProcessName() {
         ActivityManager manager =
                 (ActivityManager) XUtil.getContext().getSystemService(Context.ACTIVITY_SERVICE);
-        if (manager == null) return null;
+        if (manager == null) {
+            return null;
+        }
         List<ActivityManager.RunningAppProcessInfo> pInfo = manager.getRunningAppProcesses();
         if (pInfo != null && pInfo.size() > 0) {
             for (ActivityManager.RunningAppProcessInfo aInfo : pInfo) {
@@ -117,7 +124,9 @@ public final class ProcessUtils {
                             .queryUsageStats(UsageStatsManager.INTERVAL_BEST,
                                     beginTime, endTime);
                 }
-                if (usageStatsList == null || usageStatsList.isEmpty()) return null;
+                if (usageStatsList == null || usageStatsList.isEmpty()) {
+                    return null;
+                }
                 UsageStats recentStats = null;
                 for (UsageStats usageStats : usageStatsList) {
                     if (recentStats == null
@@ -141,7 +150,9 @@ public final class ProcessUtils {
     public static Set<String> getAllBackgroundProcesses() {
         ActivityManager am =
                 (ActivityManager) XUtil.getContext().getSystemService(Context.ACTIVITY_SERVICE);
-        if (am == null) return Collections.emptySet();
+        if (am == null) {
+            return Collections.emptySet();
+        }
         List<ActivityManager.RunningAppProcessInfo> info = am.getRunningAppProcesses();
         Set<String> set = new HashSet<>();
         if (info != null) {
@@ -160,7 +171,9 @@ public final class ProcessUtils {
     public static boolean isProcessRunning(@NonNull String processName) {
         ActivityManager am =
                 (ActivityManager) XUtil.getContext().getSystemService(Context.ACTIVITY_SERVICE);
-        if (am == null) return false;
+        if (am == null) {
+            return false;
+        }
         List<ActivityManager.RunningAppProcessInfo> info = am.getRunningAppProcesses();
         if (info != null) {
             for (ActivityManager.RunningAppProcessInfo aInfo : info) {
@@ -183,7 +196,9 @@ public final class ProcessUtils {
     public static Set<String> killAllBackgroundProcesses() {
         ActivityManager am =
                 (ActivityManager) XUtil.getContext().getSystemService(Context.ACTIVITY_SERVICE);
-        if (am == null) return Collections.emptySet();
+        if (am == null) {
+            return Collections.emptySet();
+        }
         List<ActivityManager.RunningAppProcessInfo> info = am.getRunningAppProcesses();
         Set<String> set = new HashSet<>();
         for (ActivityManager.RunningAppProcessInfo aInfo : info) {
@@ -213,9 +228,13 @@ public final class ProcessUtils {
     public static boolean killBackgroundProcesses(@NonNull final String packageName) {
         ActivityManager am =
                 (ActivityManager) XUtil.getContext().getSystemService(Context.ACTIVITY_SERVICE);
-        if (am == null) return false;
+        if (am == null) {
+            return false;
+        }
         List<ActivityManager.RunningAppProcessInfo> info = am.getRunningAppProcesses();
-        if (info == null || info.size() == 0) return true;
+        if (info == null || info.size() == 0) {
+            return true;
+        }
         for (ActivityManager.RunningAppProcessInfo aInfo : info) {
             if (Arrays.asList(aInfo.pkgList).contains(packageName)) {
                 Logger.d("[killBackgroundProcesses]：" + aInfo.processName);
@@ -223,7 +242,9 @@ public final class ProcessUtils {
             }
         }
         info = am.getRunningAppProcesses();
-        if (info == null || info.size() == 0) return true;
+        if (info == null || info.size() == 0) {
+            return true;
+        }
         for (ActivityManager.RunningAppProcessInfo aInfo : info) {
             if (Arrays.asList(aInfo.pkgList).contains(packageName)) {
                 return false;
@@ -238,27 +259,30 @@ public final class ProcessUtils {
      *
      * @return 被清理的数量
      */
+    @RequiresPermission(Manifest.permission.KILL_BACKGROUND_PROCESSES)
     public static int gc() {
         long beforeGCDeviceUsableMemory = getDeviceUsableMemory();
         int count = 0; // 清理掉的进程数
         ActivityManager am = (ActivityManager) XUtil.getContext().getSystemService(Context.ACTIVITY_SERVICE);
         // 获取正在运行的service列表
         List<ActivityManager.RunningServiceInfo> serviceList = am.getRunningServices(100);
-        if (serviceList != null)
+        if (serviceList != null) {
             for (ActivityManager.RunningServiceInfo service : serviceList) {
-                if (service.pid == android.os.Process.myPid())
+                if (service.pid == Process.myPid()) {
                     continue;
+                }
                 try {
-                    android.os.Process.killProcess(service.pid);
+                    Process.killProcess(service.pid);
                     count++;
                 } catch (Exception e) {
                     e.getStackTrace();
                 }
             }
+        }
 
         // 获取正在运行的进程列表
         List<ActivityManager.RunningAppProcessInfo> processList = am.getRunningAppProcesses();
-        if (processList != null)
+        if (processList != null) {
             for (ActivityManager.RunningAppProcessInfo process : processList) {
                 // 一般数值大于RunningAppProcessInfo.IMPORTANCE_SERVICE的进程都长时间没用或者空进程了
                 // 一般数值大于RunningAppProcessInfo.IMPORTANCE_VISIBLE的进程都是非可见进程，也就是在后台运行着
@@ -276,6 +300,7 @@ public final class ProcessUtils {
                     }
                 }
             }
+        }
         Logger.d("清理了" + (getDeviceUsableMemory() - beforeGCDeviceUsableMemory) + "M内存");
         return count;
     }
@@ -309,9 +334,13 @@ public final class ProcessUtils {
      */
     public static String getCurrentProcessName() {
         ActivityManager am = (ActivityManager) XUtil.getContext().getSystemService(Context.ACTIVITY_SERVICE);
-        if (am == null) return null;
+        if (am == null) {
+            return null;
+        }
         List<ActivityManager.RunningAppProcessInfo> info = am.getRunningAppProcesses();
-        if (info == null || info.size() == 0) return null;
+        if (info == null || info.size() == 0) {
+            return null;
+        }
         int pid = Process.myPid();
         for (ActivityManager.RunningAppProcessInfo aInfo : info) {
             if (aInfo.pid == pid) {

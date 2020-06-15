@@ -20,15 +20,16 @@ import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.support.annotation.RequiresPermission;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import com.xuexiang.xutil.XUtil;
 import com.xuexiang.xutil.app.IntentUtils;
 import com.xuexiang.xutil.common.StringUtils;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static android.Manifest.permission.CALL_PHONE;
@@ -60,6 +61,7 @@ public final class PhoneUtils {
 
     /**
      * 获取TelephonyManager
+     *
      * @return
      */
     private static TelephonyManager getTelephonyManager() {
@@ -140,7 +142,9 @@ public final class PhoneUtils {
     public static String getSimOperatorByMnc() {
         TelephonyManager tm = getTelephonyManager();
         String operator = tm != null ? tm.getSimOperator() : null;
-        if (operator == null) return null;
+        if (operator == null) {
+            return null;
+        }
         switch (operator) {
             case "46000":
             case "46002":
@@ -183,7 +187,9 @@ public final class PhoneUtils {
     @RequiresPermission(READ_PHONE_STATE)
     public static String getPhoneInfo() {
         TelephonyManager tm = getTelephonyManager();
-        if (tm == null) return "";
+        if (tm == null) {
+            return "";
+        }
         String str = "";
         str += "DeviceId(IMEI) = " + tm.getDeviceId() + "\n";
         str += "DeviceSoftwareVersion = " + tm.getDeviceSoftwareVersion() + "\n";
@@ -242,7 +248,9 @@ public final class PhoneUtils {
      */
     @RequiresPermission(SEND_SMS)
     public static void sendSmsSilent(final String phoneNumber, final String content) {
-        if (StringUtils.isEmpty(content)) return;
+        if (StringUtils.isEmpty(content)) {
+            return;
+        }
         PendingIntent sentIntent = PendingIntent.getBroadcast(XUtil.getContext(), 0, new Intent(), 0);
         SmsManager smsManager = SmsManager.getDefault();
         if (content.length() >= 70) {
@@ -254,6 +262,64 @@ public final class PhoneUtils {
             smsManager.sendTextMessage(phoneNumber, null, content, sentIntent, null);
         }
     }
+
+
+    /**
+     * 打开或关闭移动数据
+     * <p>需系统应用 需添加权限
+     * {@code <uses-permission android:name="android.permission.MODIFY_PHONE_STATE" />}</p>
+     *
+     * @param enabled {@code true}: 打开<br>{@code false}: 关闭
+     */
+    public static void setMobileDataEnabled(final boolean enabled) {
+        try {
+            TelephonyManager tm =
+                    (TelephonyManager) XUtil.getContext().getSystemService(Context.TELEPHONY_SERVICE);
+            if (tm == null) {
+                return;
+            }
+            Method setMobileDataEnabledMethod =
+                    tm.getClass().getDeclaredMethod("setDataEnabled", boolean.class);
+            setMobileDataEnabledMethod.invoke(tm, enabled);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // notification bar
+    ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * 设置通知栏是否可见
+     * <p>需添加权限
+     * {@code <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />}</p>
+     *
+     * @param isVisible {@code true}: 可见<br>{@code false}: 关闭
+     */
+    public static void setNotificationBarVisibility(final boolean isVisible) {
+        String methodName;
+        if (isVisible) {
+            methodName = (Build.VERSION.SDK_INT <= 16) ? "expand" : "expandNotificationsPanel";
+        } else {
+            methodName = (Build.VERSION.SDK_INT <= 16) ? "collapse" : "collapsePanels";
+        }
+        invokePanels(methodName);
+    }
+
+    private static void invokePanels(final String methodName) {
+        try {
+            @SuppressLint("WrongConstant")
+            Object service = XUtil.getContext().getSystemService("statusbar");
+            @SuppressLint("PrivateApi")
+            Class<?> statusBarManager = Class.forName("android.app.StatusBarManager");
+            Method expand = statusBarManager.getMethod(methodName);
+            expand.invoke(service);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
 //    /**
 //     * 获取手机联系人

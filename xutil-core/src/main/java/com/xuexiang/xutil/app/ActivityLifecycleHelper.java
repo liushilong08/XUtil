@@ -37,45 +37,47 @@ import java.util.Stack;
  */
 public class ActivityLifecycleHelper implements Application.ActivityLifecycleCallbacks {
 
-    private Stack<Activity> mActivityStack;
+    private final Stack<Activity> mActivityStack = new Stack<>();
+
+    private final Object mLock = new Object();
 
     public ActivityLifecycleHelper() {
-        mActivityStack = new Stack<>();
+
     }
 
     @Override
-    public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+    public void onActivityCreated(@NonNull Activity activity, Bundle savedInstanceState) {
         Logger.v("[onActivityCreated]:" + StringUtils.getName(activity));
         addActivity(activity);
     }
 
     @Override
-    public void onActivityStarted(Activity activity) {
+    public void onActivityStarted(@NonNull Activity activity) {
         Logger.v("[onActivityStarted]:" + StringUtils.getName(activity));
     }
 
     @Override
-    public void onActivityResumed(Activity activity) {
+    public void onActivityResumed(@NonNull Activity activity) {
         Logger.v("[onActivityResumed]:" + StringUtils.getName(activity));
     }
 
     @Override
-    public void onActivityPaused(Activity activity) {
+    public void onActivityPaused(@NonNull Activity activity) {
         Logger.v("[onActivityPaused]:" + StringUtils.getName(activity));
     }
 
     @Override
-    public void onActivityStopped(Activity activity) {
+    public void onActivityStopped(@NonNull Activity activity) {
         Logger.v("[onActivityStopped]:" + StringUtils.getName(activity));
     }
 
     @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+    public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
         Logger.v("[onActivitySaveInstanceState]:" + StringUtils.getName(activity));
     }
 
     @Override
-    public void onActivityDestroyed(Activity activity) {
+    public void onActivityDestroyed(@NonNull Activity activity) {
         Logger.v("[onActivityDestroyed]:" + StringUtils.getName(activity));
         removeActivity(activity);
     }
@@ -84,9 +86,6 @@ public class ActivityLifecycleHelper implements Application.ActivityLifecycleCal
      * 添加Activity到堆栈
      */
     private void addActivity(Activity activity) {
-        if (mActivityStack == null) {
-            mActivityStack = new Stack<>();
-        }
         mActivityStack.add(activity);
     }
 
@@ -111,12 +110,28 @@ public class ActivityLifecycleHelper implements Application.ActivityLifecycleCal
     /**
      * 获取上一个Activity
      *
-     * @return
+     * @return 上一个Activity
      */
     public Activity getPreActivity() {
         int size = mActivityStack.size();
-        if (size < 2) return null;
+        if (size < 2) {
+            return null;
+        }
         return mActivityStack.elementAt(size - 2);
+    }
+
+    /**
+     * 某一个Activity是否存在
+     *
+     * @return true : 存在, false: 不存在
+     */
+    public boolean isActivityExist(@NonNull Class<? extends Activity> clazz) {
+        for (Activity activity : mActivityStack) {
+            if (activity.getClass().equals(clazz)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -150,16 +165,14 @@ public class ActivityLifecycleHelper implements Application.ActivityLifecycleCal
      * @param clazz activity的类
      */
     public void finishActivity(@NonNull Class<? extends Activity> clazz) {
-        if (mActivityStack != null) {
-            Iterator<Activity> it = mActivityStack.iterator();
-            synchronized (it) {
-                while (it.hasNext()) {
-                    Activity activity = it.next();
-                    if (clazz.getCanonicalName().equals(activity.getClass().getCanonicalName())) {
-                        if (!activity.isFinishing()) {
-                            it.remove();
-                            activity.finish();
-                        }
+        Iterator<Activity> it = mActivityStack.iterator();
+        synchronized (mLock) {
+            while (it.hasNext()) {
+                Activity activity = it.next();
+                if (StringUtils.equals(clazz.getCanonicalName(), activity.getClass().getCanonicalName())) {
+                    if (!activity.isFinishing()) {
+                        it.remove();
+                        activity.finish();
                     }
                 }
             }
@@ -170,20 +183,23 @@ public class ActivityLifecycleHelper implements Application.ActivityLifecycleCal
      * 结束所有Activity
      */
     public void finishAllActivity() {
-        if (mActivityStack != null) {
-            for (int i = 0, size = mActivityStack.size(); i < size; i++) {
-                Activity activity = mActivityStack.get(i);
-                if (activity != null) {
-                    if (!activity.isFinishing()) {
-                        Logger.d("[FinishActivity]:" + StringUtils.getName(activity));
-                        activity.finish();
-                    }
+        for (int i = 0, size = mActivityStack.size(); i < size; i++) {
+            Activity activity = mActivityStack.get(i);
+            if (activity != null) {
+                if (!activity.isFinishing()) {
+                    Logger.d("[FinishActivity]:" + StringUtils.getName(activity));
+                    activity.finish();
                 }
             }
-            mActivityStack.clear();
         }
+        mActivityStack.clear();
     }
 
+    /**
+     * 获取当前Activity的活动栈
+     *
+     * @return 当前Activity的活动栈
+     */
     public Stack<Activity> getActivityStack() {
         return mActivityStack;
     }

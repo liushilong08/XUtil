@@ -17,7 +17,6 @@
 package com.xuexiang.xutildemo.fragment;
 
 import android.content.Intent;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 
@@ -26,10 +25,8 @@ import com.xuexiang.xpage.annotation.Page;
 import com.xuexiang.xpage.base.XPageSimpleListFragment;
 import com.xuexiang.xpage.utils.TitleBar;
 import com.xuexiang.xutil.app.IntentUtils;
-import com.xuexiang.xutil.app.SocialShareUtils;
 import com.xuexiang.xutil.app.router.Router;
 import com.xuexiang.xutil.common.ClickUtils;
-import com.xuexiang.xutil.data.DateUtils;
 import com.xuexiang.xutil.system.CameraUtils;
 import com.xuexiang.xutil.tip.ToastUtils;
 import com.xuexiang.xutildemo.activity.TestRouterActivity;
@@ -41,7 +38,6 @@ import java.util.Map;
 
 import static android.app.Activity.RESULT_OK;
 import static com.xuexiang.xaop.consts.PermissionConsts.CAMERA;
-import static com.xuexiang.xaop.consts.PermissionConsts.STORAGE;
 import static com.xuexiang.xutil.system.CameraUtils.REQUEST_CAMERA;
 
 /**
@@ -53,6 +49,7 @@ import static com.xuexiang.xutil.system.CameraUtils.REQUEST_CAMERA;
 @Page(name = "XUtil")
 public class MainFragment extends XPageSimpleListFragment {
     private File mCameraFile;
+
     /**
      * 初始化例子
      *
@@ -65,6 +62,8 @@ public class MainFragment extends XPageSimpleListFragment {
         lists.add("通知");
         lists.add("社会化分享");
         lists.add("拍照");
+        lists.add("uri获取文件路径测试");
+        lists.add("测试SAFUtils");
         return lists;
     }
 
@@ -96,6 +95,12 @@ public class MainFragment extends XPageSimpleListFragment {
                 break;
             case 3:
                 openCamera();
+                break;
+            case 4:
+                openPage(UriPathFragment.class);
+                break;
+            case 5:
+                openPage(SAFFragment.class);
                 break;
             default:
                 break;

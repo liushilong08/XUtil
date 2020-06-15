@@ -28,10 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DoubleKeyValueMap<K1, K2, V> {
 
-    private ConcurrentHashMap<K1, ConcurrentHashMap<K2, V>> m_k1_k2V_map;
+    private final ConcurrentHashMap<K1, ConcurrentHashMap<K2, V>> m_k1_k2V_map;
 
     public DoubleKeyValueMap() {
-        m_k1_k2V_map = new ConcurrentHashMap<K1, ConcurrentHashMap<K2, V>>();
+        m_k1_k2V_map = new ConcurrentHashMap<>();
     }
 
     /**
@@ -42,18 +42,20 @@ public class DoubleKeyValueMap<K1, K2, V> {
      * @param value
      */
     public void put(K1 key1, K2 key2, V value) {
-        if (key1 == null || key2 == null || value == null) return;
+        if (key1 == null || key2 == null || value == null) {
+            return;
+        }
         if (m_k1_k2V_map.containsKey(key1)) {
             ConcurrentHashMap<K2, V> k2V_map = m_k1_k2V_map.get(key1);
             if (k2V_map != null) {
                 k2V_map.put(key2, value);
             } else {
-                k2V_map = new ConcurrentHashMap<K2, V>();
+                k2V_map = new ConcurrentHashMap<>();
                 k2V_map.put(key2, value);
                 m_k1_k2V_map.put(key1, k2V_map);
             }
         } else {
-            ConcurrentHashMap<K2, V> k2V_map = new ConcurrentHashMap<K2, V>();
+            ConcurrentHashMap<K2, V> k2V_map = new ConcurrentHashMap<>();
             k2V_map.put(key2, value);
             m_k1_k2V_map.put(key1, k2V_map);
         }
@@ -95,7 +97,7 @@ public class DoubleKeyValueMap<K1, K2, V> {
     public Collection<V> getAllValues() {
         Collection<V> result;
         Set<K1> k1Set = m_k1_k2V_map.keySet();
-        result = new ArrayList<V>();
+        result = new ArrayList<>();
         for (K1 k1 : k1Set) {
             Collection<V> values = m_k1_k2V_map.get(k1).values();
             result.addAll(values);
@@ -117,7 +119,9 @@ public class DoubleKeyValueMap<K1, K2, V> {
      * @return
      */
     public int size() {
-        if (m_k1_k2V_map.size() == 0) return 0;
+        if (m_k1_k2V_map.size() == 0) {
+            return 0;
+        }
 
         int result = 0;
         for (ConcurrentHashMap<K2, V> k2V_map : m_k1_k2V_map.values()) {

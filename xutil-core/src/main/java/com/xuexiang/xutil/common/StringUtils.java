@@ -17,9 +17,7 @@
 package com.xuexiang.xutil.common;
 
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.DecimalFormat;
@@ -70,7 +68,9 @@ public final class StringUtils {
      * @return {@code true}: null 或全空白字符<br> {@code false}: 不为 null 且不全空白字符
      */
     public static boolean isSpace(final String s) {
-        if (s == null) return true;
+        if (s == null) {
+            return true;
+        }
         for (int i = 0, len = s.length(); i < len; ++i) {
             if (!Character.isWhitespace(s.charAt(i))) {
                 return false;
@@ -87,14 +87,18 @@ public final class StringUtils {
      * @return {@code true}: 相等<br>{@code false}: 不相等
      */
     public static boolean equals(final CharSequence a, final CharSequence b) {
-        if (a == b) return true;
+        if (a == b) {
+            return true;
+        }
         int length;
         if (a != null && b != null && (length = a.length()) == b.length()) {
             if (a instanceof String && b instanceof String) {
                 return a.equals(b);
             } else {
                 for (int i = 0; i < length; i++) {
-                    if (a.charAt(i) != b.charAt(i)) return false;
+                    if (a.charAt(i) != b.charAt(i)) {
+                        return false;
+                    }
                 }
                 return true;
             }
@@ -144,6 +148,26 @@ public final class StringUtils {
     }
 
     /**
+     * 裁剪字符串
+     *
+     * @param originalStr 原字符串
+     * @param beginIndex  开始的索引
+     * @param endIndex    结束的索引
+     * @return
+     */
+    public static String cutString(String originalStr, int beginIndex, int endIndex) {
+        if (isEmpty(originalStr)) {
+            return originalStr;
+        } else {
+            try {
+                return originalStr.substring(beginIndex, endIndex);
+            } catch (IndexOutOfBoundsException e) {
+                return originalStr;
+            }
+        }
+    }
+
+    /**
      * String转Int（防止崩溃）
      *
      * @param value
@@ -164,9 +188,8 @@ public final class StringUtils {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            e.printStackTrace();
+            return defValue;
         }
-        return defValue;
     }
 
     /**
@@ -190,9 +213,8 @@ public final class StringUtils {
         try {
             return Float.parseFloat(value);
         } catch (NumberFormatException e) {
-            e.printStackTrace();
+            return defValue;
         }
-        return defValue;
     }
 
 
@@ -217,9 +239,8 @@ public final class StringUtils {
         try {
             return Short.parseShort(value);
         } catch (NumberFormatException e) {
-            e.printStackTrace();
+            return defValue;
         }
-        return defValue;
     }
 
     /**
@@ -243,9 +264,8 @@ public final class StringUtils {
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
-            e.printStackTrace();
+            return defValue;
         }
-        return defValue;
     }
 
     /**
@@ -270,9 +290,8 @@ public final class StringUtils {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            e.printStackTrace();
+            return defValue;
         }
-        return defValue;
     }
 
     /**
@@ -296,9 +315,8 @@ public final class StringUtils {
         try {
             return Boolean.parseBoolean(value);
         } catch (Exception e) {
-            e.printStackTrace();
+            return defValue;
         }
-        return defValue;
     }
 
     /**
@@ -349,8 +367,10 @@ public final class StringUtils {
      * @return 首字母大写字符串
      */
     public static String upperFirstLetter(final String s) {
-        if (isEmpty(s) || !Character.isLowerCase(s.charAt(0))) return s;
-        return String.valueOf((char) (s.charAt(0) - 32)) + s.substring(1);
+        if (isEmpty(s) || !Character.isLowerCase(s.charAt(0))) {
+            return s;
+        }
+        return (char) (s.charAt(0) - 32) + s.substring(1);
     }
 
     /**
@@ -360,8 +380,10 @@ public final class StringUtils {
      * @return 首字母小写字符串
      */
     public static String lowerFirstLetter(final String s) {
-        if (isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return s;
-        return String.valueOf((char) (s.charAt(0) + 32)) + s.substring(1);
+        if (isEmpty(s) || !Character.isUpperCase(s.charAt(0))) {
+            return s;
+        }
+        return (char) (s.charAt(0) + 32) + s.substring(1);
     }
 
     /**
@@ -372,7 +394,9 @@ public final class StringUtils {
      */
     public static String reverse(final String s) {
         int len = length(s);
-        if (len <= 1) return s;
+        if (len <= 1) {
+            return s;
+        }
         int mid = len >> 1;
         char[] chars = s.toCharArray();
         char c;
@@ -418,7 +442,9 @@ public final class StringUtils {
     public static String concatSpiltWith(String split, Object... more) {
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < more.length; i++) {
-            if (i != 0) buf.append(split);
+            if (i != 0) {
+                buf.append(split);
+            }
             buf.append(toString(more[i]));
         }
         return buf.toString();
@@ -427,13 +453,15 @@ public final class StringUtils {
     /**
      * 判断一个数组里是否包含指定对象
      *
-     * @param arr 对象数组
-     * @param obj 要判断的对象
+     * @param array 对象数组
+     * @param obj   要判断的对象
      * @return 是否包含
      */
-    public static boolean contains(Object arr[], Object... obj) {
-        if (arr == null || obj == null || arr.length == 0) return false;
-        return Arrays.asList(arr).containsAll(Arrays.asList(obj));
+    public static boolean contains(Object[] array, Object... obj) {
+        if (array == null || obj == null || array.length == 0) {
+            return false;
+        }
+        return Arrays.asList(array).containsAll(Arrays.asList(obj));
     }
 
     /**
@@ -588,7 +616,8 @@ public final class StringUtils {
      * @return
      */
     public static String format2Decimals(final String str) {
-        DecimalFormat decimalFormat = new DecimalFormat("0.00");// 构造方法的字符格式这里如果小数不足2位,会以0补足.
+        // 构造方法的字符格式这里如果小数不足2位,会以0补足.
+        DecimalFormat decimalFormat = new DecimalFormat("0.00");
         return isEmpty(str) ? "" : decimalFormat.format(toDouble(str, -1));
     }
 
@@ -599,7 +628,8 @@ public final class StringUtils {
      * @return
      */
     public static String format2Decimals(final double number) {
-        return new DecimalFormat("0.00").format(number); // 构造方法的字符格式这里如果小数不足2位,会以0补足.
+        // 构造方法的字符格式这里如果小数不足2位,会以0补足.
+        return new DecimalFormat("0.00").format(number);
     }
 
     /**
@@ -609,28 +639,33 @@ public final class StringUtils {
      * @return
      */
     public static String format2Decimals(final float number) {
-        return new DecimalFormat("0.00").format(number); // 构造方法的字符格式这里如果小数不足2位,会以0补足.
+        // 构造方法的字符格式这里如果小数不足2位,会以0补足.
+        return new DecimalFormat("0.00").format(number);
     }
 
     /**
      * 比较两个版本号
      *
-     * @param versionName1
-     * @param versionName2
+     * @param versionName1 比较版本1
+     * @param versionName2 比较版本2
      * @return [> 0 versionName1 > versionName2] [= 0 versionName1 = versionName2]  [< 0 versionName1 < versionName2]
      */
     public static int compareVersionName(@NonNull String versionName1, @NonNull String versionName2) {
         if (versionName1.equals(versionName2)) {
             return 0;
         }
-        String[] versionArray1 = versionName1.split("\\.");//注意此处为正则匹配，不能用"."；
+        //注意此处为正则匹配，不能用"."；
+        String[] versionArray1 = versionName1.split("\\.");
         String[] versionArray2 = versionName2.split("\\.");
         int idx = 0;
-        int minLength = Math.min(versionArray1.length, versionArray2.length);//取最小长度值
+        //取最小长度值
+        int minLength = Math.min(versionArray1.length, versionArray2.length);
         int diff = 0;
         while (idx < minLength
-                && (diff = versionArray1[idx].length() - versionArray2[idx].length()) == 0//先比较长度
-                && (diff = versionArray1[idx].compareTo(versionArray2[idx])) == 0) {//再比较字符
+                //先比较长度
+                && (diff = versionArray1[idx].length() - versionArray2[idx].length()) == 0
+                //再比较字符
+                && (diff = versionArray1[idx].compareTo(versionArray2[idx])) == 0) {
             ++idx;
         }
         //如果已经分出大小，则直接返回，如果未分出大小，则再比较位数，有子版本的为大；

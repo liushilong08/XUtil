@@ -19,6 +19,8 @@ package com.xuexiang.xutil.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -30,7 +32,9 @@ import android.content.pm.Signature;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.RequiresPermission;
 import android.text.TextUtils;
 
@@ -46,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.Manifest.permission.INSTALL_PACKAGES;
+import static android.Manifest.permission.KILL_BACKGROUND_PROCESSES;
 import static android.Manifest.permission.PACKAGE_USAGE_STATS;
 import static android.Manifest.permission.REQUEST_INSTALL_PACKAGES;
 
@@ -112,7 +117,9 @@ public final class AppUtils {
      */
     @RequiresPermission(REQUEST_INSTALL_PACKAGES)
     public static void installApp(final File file, final String authority) {
-        if (!FileUtils.isFileExists(file)) return;
+        if (FileUtils.isFileExists(file)) {
+            return;
+        }
         XUtil.getContext().startActivity(IntentUtils.getInstallAppIntent(file, authority, true));
     }
 
@@ -151,7 +158,9 @@ public final class AppUtils {
                                   final File file,
                                   final String authority,
                                   final int requestCode) {
-        if (!FileUtils.isFileExists(file)) return;
+        if (FileUtils.isFileExists(file)) {
+            return;
+        }
         activity.startActivityForResult(IntentUtils.getInstallAppIntent(file, authority),
                 requestCode);
     }
@@ -184,7 +193,9 @@ public final class AppUtils {
     @RequiresPermission(INSTALL_PACKAGES)
     private static boolean installAppSilentBelow24(Context context, final String filePath) {
         File file = FileUtils.getFileByPath(filePath);
-        if (!FileUtils.isFileExists(file)) return false;
+        if (FileUtils.isFileExists(file)) {
+            return false;
+        }
 
         String pmParams = " -r " + getInstallLocationParams();
 
@@ -210,7 +221,9 @@ public final class AppUtils {
     @RequiresPermission(INSTALL_PACKAGES)
     private static boolean installAppSilentAbove24(final String packageName, final String filePath) {
         File file = FileUtils.getFileByPath(filePath);
-        if (!FileUtils.isFileExists(file)) return false;
+        if (FileUtils.isFileExists(file)) {
+            return false;
+        }
         boolean isRoot = isDeviceRooted();
         String command = "pm install -i " + packageName + " --user 0 " + filePath;
         ShellUtils.CommandResult commandResult = ShellUtils.execCommand(command, isRoot);
@@ -224,7 +237,9 @@ public final class AppUtils {
      * @param packageName 包名
      */
     public static void uninstallApp(final String packageName) {
-        if (isSpace(packageName)) return;
+        if (isSpace(packageName)) {
+            return;
+        }
         XUtil.getContext().startActivity(IntentUtils.getUninstallAppIntent(packageName, true));
     }
 
@@ -238,7 +253,9 @@ public final class AppUtils {
     public static void uninstallApp(final Activity activity,
                                     final String packageName,
                                     final int requestCode) {
-        if (isSpace(packageName)) return;
+        if (isSpace(packageName)) {
+            return;
+        }
         activity.startActivityForResult(IntentUtils.getUninstallAppIntent(packageName), requestCode);
     }
 
@@ -252,7 +269,9 @@ public final class AppUtils {
      * @return {@code true}: 卸载成功<br>{@code false}: 卸载失败
      */
     public static boolean uninstallAppSilent(final String packageName, final boolean isKeepData) {
-        if (isSpace(packageName)) return false;
+        if (isSpace(packageName)) {
+            return false;
+        }
         boolean isRoot = isDeviceRooted();
         String command = "LD_LIBRARY_PATH=/vendor/lib:/system/lib pm uninstall "
                 + (isKeepData ? "-k " : "")
@@ -278,7 +297,9 @@ public final class AppUtils {
      */
     public static boolean isAppRoot() {
         ShellUtils.CommandResult result = ShellUtils.execCommand("echo root", true);
-        if (result.result == 0) return true;
+        if (result.result == 0) {
+            return true;
+        }
         if (result.errorMsg != null) {
             Logger.dTag("AppUtils", "isAppRoot() called" + result.errorMsg);
         }
@@ -291,7 +312,9 @@ public final class AppUtils {
      * @param packageName 包名
      */
     public static void launchApp(final String packageName) {
-        if (isSpace(packageName)) return;
+        if (isSpace(packageName)) {
+            return;
+        }
         XUtil.getContext().startActivity(IntentUtils.getLaunchAppIntent(packageName, true));
     }
 
@@ -305,20 +328,48 @@ public final class AppUtils {
     public static void launchApp(final Activity activity,
                                  final String packageName,
                                  final int requestCode) {
-        if (isSpace(packageName)) return;
+        if (isSpace(packageName)) {
+            return;
+        }
         activity.startActivityForResult(IntentUtils.getLaunchAppIntent(packageName), requestCode);
     }
 
     /**
      * 退出 App
      */
+    @RequiresPermission(KILL_BACKGROUND_PROCESSES)
     public static void exitApp() {
-        if (XUtil.get().getActivityLifecycleHelper() != null) {
-            XUtil.get().getActivityLifecycleHelper().exit();
+        if (XUtil.getActivityLifecycleHelper() != null) {
+            XUtil.getActivityLifecycleHelper().exit();
         }
         ServiceUtils.stopAllRunningService(XUtil.getContext());
         ProcessUtils.killBackgroundProcesses(XUtil.getContext().getPackageName());
         System.exit(0);
+    }
+
+    /**
+     * 重启app
+     */
+    public static void rebootApp() {
+        rebootApp(1000);
+    }
+
+    /**
+     * 重启app
+     *
+     * @param delayMillis 延迟时间
+     */
+    @RequiresPermission(KILL_BACKGROUND_PROCESSES)
+    public static void rebootApp(int delayMillis) {
+        Intent intent = IntentUtils.getLaunchAppIntent(XUtil.getContext().getPackageName());
+        PendingIntent restartIntent = PendingIntent.getActivity(XUtil.getContext(), 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        AlarmManager mgr = XUtil.getSystemService(Context.ALARM_SERVICE, AlarmManager.class);
+        if (mgr != null) {
+            // 1秒钟后重启应用
+            mgr.set(AlarmManager.RTC, System.currentTimeMillis() + delayMillis, restartIntent);
+        }
+        //退出程序
+        exitApp();
     }
 
     /**
@@ -343,7 +394,9 @@ public final class AppUtils {
      * @param packageName 包名
      */
     public static void getAppDetailsSettings(final String packageName) {
-        if (isSpace(packageName)) return;
+        if (isSpace(packageName)) {
+            return;
+        }
         XUtil.getContext().startActivity(IntentUtils.getAppDetailsSettingsIntent(packageName, true));
     }
 
@@ -363,7 +416,9 @@ public final class AppUtils {
      * @return App 名称
      */
     public static String getAppName(final String packageName) {
-        if (isSpace(packageName)) return null;
+        if (isSpace(packageName)) {
+            return null;
+        }
         try {
             PackageManager pm = getPackageManager();
             PackageInfo pi = pm.getPackageInfo(packageName, 0);
@@ -390,7 +445,9 @@ public final class AppUtils {
      * @return App 图标
      */
     public static Drawable getAppIcon(final String packageName) {
-        if (isSpace(packageName)) return null;
+        if (isSpace(packageName)) {
+            return null;
+        }
         try {
             PackageManager pm = getPackageManager();
             PackageInfo pi = pm.getPackageInfo(packageName, 0);
@@ -417,7 +474,9 @@ public final class AppUtils {
      * @return App 路径
      */
     public static String getAppPath(final String packageName) {
-        if (isSpace(packageName)) return null;
+        if (isSpace(packageName)) {
+            return null;
+        }
         try {
             PackageManager pm = getPackageManager();
             PackageInfo pi = pm.getPackageInfo(packageName, 0);
@@ -444,7 +503,9 @@ public final class AppUtils {
      * @return App 版本号
      */
     public static String getAppVersionName(final String packageName) {
-        if (isSpace(packageName)) return null;
+        if (isSpace(packageName)) {
+            return null;
+        }
         try {
             PackageManager pm = getPackageManager();
             PackageInfo pi = pm.getPackageInfo(packageName, 0);
@@ -471,7 +532,9 @@ public final class AppUtils {
      * @return App 版本码
      */
     public static int getAppVersionCode(final String packageName) {
-        if (isSpace(packageName)) return -1;
+        if (isSpace(packageName)) {
+            return -1;
+        }
         try {
             PackageManager pm = getPackageManager();
             PackageInfo pi = pm.getPackageInfo(packageName, 0);
@@ -498,7 +561,9 @@ public final class AppUtils {
      * @return {@code true}: 是<br>{@code false}: 否
      */
     public static boolean isSystemApp(final String packageName) {
-        if (isSpace(packageName)) return false;
+        if (isSpace(packageName)) {
+            return false;
+        }
         try {
             PackageManager pm = getPackageManager();
             ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
@@ -525,7 +590,9 @@ public final class AppUtils {
      * @return {@code true}: 是<br>{@code false}: 否
      */
     public static boolean isAppDebug(final String packageName) {
-        if (isSpace(packageName)) return false;
+        if (isSpace(packageName)) {
+            return false;
+        }
         try {
             PackageManager pm = getPackageManager();
             ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
@@ -552,7 +619,9 @@ public final class AppUtils {
      * @return App 签名
      */
     public static Signature[] getAppSignature(final String packageName) {
-        if (isSpace(packageName)) return null;
+        if (isSpace(packageName)) {
+            return null;
+        }
         try {
             PackageManager pm = getPackageManager();
             @SuppressLint("PackageManagerGetSignatures")
@@ -583,7 +652,9 @@ public final class AppUtils {
      */
     public static String getAppSignatureSHA1(final String packageName) {
         Signature[] signature = getAppSignature(packageName);
-        if (signature == null) return null;
+        if (signature == null) {
+            return null;
+        }
         return EncryptUtils.encryptSHA1ToString(signature[0].toByteArray()).
                 replaceAll("(?<=[0-9A-F]{2})[0-9A-F]{2}", ":$0");
     }
@@ -596,7 +667,9 @@ public final class AppUtils {
     public static boolean isAppForeground() {
         ActivityManager manager = getActivityManager();
         List<ActivityManager.RunningAppProcessInfo> info = manager.getRunningAppProcesses();
-        if (info == null || info.size() == 0) return false;
+        if (info == null || info.size() == 0) {
+            return false;
+        }
         for (ActivityManager.RunningAppProcessInfo aInfo : info) {
             if (aInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
                 return aInfo.processName.equals(XUtil.getContext().getPackageName());
@@ -613,6 +686,7 @@ public final class AppUtils {
      * @param packageName 包名
      * @return {@code true}: 是<br>{@code false}: 否
      */
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @RequiresPermission(PACKAGE_USAGE_STATS)
     public static boolean isAppForeground(final String packageName) {
         return !isSpace(packageName) && packageName.equals(ProcessUtils.getForegroundProcessName());
@@ -620,6 +694,7 @@ public final class AppUtils {
 
     /**
      * 是否是TopActivity
+     *
      * @param packageName
      * @return
      */
@@ -740,6 +815,7 @@ public final class AppUtils {
             this.setSystem(isSystem);
         }
 
+        @NonNull
         @Override
         public String toString() {
             return "pkg name: " + getPackageName() +
@@ -787,7 +863,9 @@ public final class AppUtils {
      * @return AppInfo 类
      */
     private static AppInfo getBean(final PackageManager pm, final PackageInfo pi) {
-        if (pm == null || pi == null) return null;
+        if (pm == null || pi == null) {
+            return null;
+        }
         ApplicationInfo ai = pi.applicationInfo;
         String packageName = pi.packageName;
         String name = ai.loadLabel(pm).toString();
@@ -814,7 +892,9 @@ public final class AppUtils {
         List<PackageInfo> installedPackages = pm.getInstalledPackages(0);
         for (PackageInfo pi : installedPackages) {
             AppInfo ai = getBean(pm, pi);
-            if (ai == null) continue;
+            if (ai == null) {
+                continue;
+            }
             list.add(ai);
         }
         return list;
@@ -862,7 +942,6 @@ public final class AppUtils {
      * @param key
      * @return Int类型的值
      */
-    @Nullable
     public static int getIntValueInMetaData(String key) {
         Bundle metaData = AppUtils.getMetaDatas();
         return metaData != null ? metaData.getInt(key) : 0;
@@ -874,7 +953,6 @@ public final class AppUtils {
      * @param key
      * @return Float类型的值
      */
-    @Nullable
     public static float getFloatValueInMetaData(String key) {
         Bundle metaData = AppUtils.getMetaDatas();
         return metaData != null ? metaData.getFloat(key) : 0F;
@@ -886,7 +964,6 @@ public final class AppUtils {
      * @param key
      * @return Double类型的值
      */
-    @Nullable
     public static double getDoubleValueInMetaData(String key) {
         Bundle metaData = AppUtils.getMetaDatas();
         return metaData != null ? metaData.getDouble(key) : 0D;
@@ -926,7 +1003,9 @@ public final class AppUtils {
     }
 
     private static boolean isSpace(final String s) {
-        if (s == null) return true;
+        if (s == null) {
+            return true;
+        }
         for (int i = 0, len = s.length(); i < len; ++i) {
             if (!Character.isWhitespace(s.charAt(i))) {
                 return false;
@@ -963,6 +1042,8 @@ public final class AppUtils {
                 return "-f";
             case APP_INSTALL_EXTERNAL:
                 return "-s";
+            default:
+                break;
         }
         return "";
     }
@@ -983,6 +1064,8 @@ public final class AppUtils {
                         return APP_INSTALL_INTERNAL;
                     case APP_INSTALL_EXTERNAL:
                         return APP_INSTALL_EXTERNAL;
+                    default:
+                        break;
                 }
             } catch (NumberFormatException e) {
                 e.printStackTrace();

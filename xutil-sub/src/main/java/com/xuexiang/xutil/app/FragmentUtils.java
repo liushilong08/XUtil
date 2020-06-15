@@ -44,18 +44,18 @@ import java.util.List;
  */
 public final class FragmentUtils {
 
-    private static final int TYPE_ADD_FRAGMENT       = 0x01;
-    private static final int TYPE_SHOW_FRAGMENT      = 0x01 << 1;
-    private static final int TYPE_HIDE_FRAGMENT      = 0x01 << 2;
+    private static final int TYPE_ADD_FRAGMENT = 0x01;
+    private static final int TYPE_SHOW_FRAGMENT = 0x01 << 1;
+    private static final int TYPE_HIDE_FRAGMENT = 0x01 << 2;
     private static final int TYPE_SHOW_HIDE_FRAGMENT = 0x01 << 3;
-    private static final int TYPE_REPLACE_FRAGMENT   = 0x01 << 4;
-    private static final int TYPE_REMOVE_FRAGMENT    = 0x01 << 5;
+    private static final int TYPE_REPLACE_FRAGMENT = 0x01 << 4;
+    private static final int TYPE_REMOVE_FRAGMENT = 0x01 << 5;
     private static final int TYPE_REMOVE_TO_FRAGMENT = 0x01 << 6;
 
-    private static final String ARGS_ID           = "args_id";
-    private static final String ARGS_IS_HIDE      = "args_is_hide";
+    private static final String ARGS_ID = "args_id";
+    private static final String ARGS_IS_HIDE = "args_is_hide";
     private static final String ARGS_IS_ADD_STACK = "args_is_add_stack";
-    private static final String ARGS_TAG          = "args_tag";
+    private static final String ARGS_TAG = "args_tag";
 
     private FragmentUtils() {
         throw new UnsupportedOperationException("u can't instantiate me...");
@@ -476,7 +476,7 @@ public final class FragmentUtils {
     public static void add(@NonNull final FragmentManager fm,
                            @NonNull final List<Fragment> adds,
                            @IdRes final int containerId,
-                           final String tags[],
+                           final String[] tags,
                            final int showIndex) {
         add(fm, adds.toArray(new Fragment[adds.size()]), containerId, tags, showIndex);
     }
@@ -492,7 +492,7 @@ public final class FragmentUtils {
     public static void add(@NonNull final FragmentManager fm,
                            @NonNull final Fragment[] adds,
                            @IdRes final int containerId,
-                           final String tags[],
+                           final String[] tags,
                            final int showIndex) {
         if (tags == null) {
             for (int i = 0, len = adds.length; i < len; ++i) {
@@ -1443,15 +1443,21 @@ public final class FragmentUtils {
             case TYPE_ADD_FRAGMENT:
                 for (Fragment fragment : dest) {
                     args = fragment.getArguments();
-                    if (args == null) return;
+                    if (args == null) {
+                        return;
+                    }
                     name = args.getString(ARGS_TAG, fragment.getClass().getName());
                     Fragment fragmentByTag = fm.findFragmentByTag(name);
                     if (fragmentByTag != null && fragmentByTag.isAdded()) {
                         ft.remove(fragmentByTag);
                     }
                     ft.add(args.getInt(ARGS_ID), fragment, name);
-                    if (args.getBoolean(ARGS_IS_HIDE)) ft.hide(fragment);
-                    if (args.getBoolean(ARGS_IS_ADD_STACK)) ft.addToBackStack(name);
+                    if (args.getBoolean(ARGS_IS_HIDE)) {
+                        ft.hide(fragment);
+                    }
+                    if (args.getBoolean(ARGS_IS_ADD_STACK)) {
+                        ft.addToBackStack(name);
+                    }
                 }
                 break;
             case TYPE_HIDE_FRAGMENT:
@@ -1474,10 +1480,14 @@ public final class FragmentUtils {
                 break;
             case TYPE_REPLACE_FRAGMENT:
                 args = dest[0].getArguments();
-                if (args == null) return;
+                if (args == null) {
+                    return;
+                }
                 name = args.getString(ARGS_TAG, dest[0].getClass().getName());
                 ft.replace(args.getInt(ARGS_ID), dest[0], name);
-                if (args.getBoolean(ARGS_IS_ADD_STACK)) ft.addToBackStack(name);
+                if (args.getBoolean(ARGS_IS_ADD_STACK)) {
+                    ft.addToBackStack(name);
+                }
                 break;
             case TYPE_REMOVE_FRAGMENT:
                 for (Fragment fragment : dest) {
@@ -1490,7 +1500,9 @@ public final class FragmentUtils {
                 for (int i = dest.length - 1; i >= 0; --i) {
                     Fragment fragment = dest[i];
                     if (fragment == dest[0]) {
-                        if (src != null) ft.remove(fragment);
+                        if (src != null) {
+                            ft.remove(fragment);
+                        }
                         break;
                     }
                     ft.remove(fragment);
@@ -1605,7 +1617,9 @@ public final class FragmentUtils {
     public static List<Fragment> getFragments(@NonNull final FragmentManager fm) {
         @SuppressWarnings("RestrictedApi")
         List<Fragment> fragments = fm.getFragments();
-        if (fragments == null || fragments.isEmpty()) return Collections.emptyList();
+        if (fragments == null || fragments.isEmpty()) {
+            return Collections.emptyList();
+        }
         return fragments;
     }
 
@@ -1720,7 +1734,9 @@ public final class FragmentUtils {
      */
     public static boolean dispatchBackPress(@NonNull final FragmentManager fm) {
         List<Fragment> fragments = getFragments(fm);
-        if (fragments == null || fragments.isEmpty()) return false;
+        if (fragments == null || fragments.isEmpty()) {
+            return false;
+        }
         for (int i = fragments.size() - 1; i >= 0; --i) {
             Fragment fragment = fragments.get(i);
             if (fragment != null
@@ -1771,7 +1787,9 @@ public final class FragmentUtils {
      */
     public static void setBackground(@NonNull final Fragment fragment, final Drawable background) {
         View view = fragment.getView();
-        if (view == null) return;
+        if (view == null) {
+            return;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             view.setBackground(background);
         } else {
@@ -1790,10 +1808,10 @@ public final class FragmentUtils {
     }
 
     private static class Args {
-        int     id;
-        boolean isHide;
-        boolean isAddStack;
-        String  tag;
+        final int id;
+        final boolean isHide;
+        final boolean isAddStack;
+        final String tag;
 
         private Args(final int id, final boolean isHide, final boolean isAddStack) {
             this(id, null, isHide, isAddStack);
@@ -1809,14 +1827,15 @@ public final class FragmentUtils {
     }
 
     public static class FragmentNode {
-        Fragment           fragment;
-        List<FragmentNode> next;
+        final Fragment fragment;
+        final List<FragmentNode> next;
 
         public FragmentNode(final Fragment fragment, final List<FragmentNode> next) {
             this.fragment = fragment;
             this.next = next;
         }
 
+        @NonNull
         @Override
         public String toString() {
             return fragment.getClass().getSimpleName()

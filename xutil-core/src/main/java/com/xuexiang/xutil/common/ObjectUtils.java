@@ -85,10 +85,8 @@ public final class ObjectUtils {
             return true;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            if (obj instanceof android.util.LongSparseArray
-                    && ((android.util.LongSparseArray) obj).size() == 0) {
-                return true;
-            }
+            return obj instanceof android.util.LongSparseArray
+                    && ((android.util.LongSparseArray) obj).size() == 0;
         }
         return false;
     }
@@ -216,6 +214,36 @@ public final class ObjectUtils {
     }
 
     /**
+     * 类型强转
+     *
+     * @param object 需要强转的对象
+     * @param clazz  需要强转的类型
+     * @param <T>
+     * @return 类型强转结果
+     */
+    public static <T> T cast(final Object object, Class<T> clazz) {
+        return clazz != null && clazz.isInstance(object) ? (T) object : null;
+    }
+
+    /**
+     * 类型强转
+     *
+     * @param object       需要强转的对象
+     * @param defaultValue 强转的默认值
+     * @param <T>
+     * @return 类型强转结果
+     */
+    public static <T> T cast(Object object, T defaultValue) {
+        if (defaultValue == null) {
+            return null;
+        } else if (object == null) {
+            return null;
+        } else {
+            return defaultValue.getClass() == object.getClass() ? (T) object : defaultValue;
+        }
+    }
+
+    /**
      * Require the objects are not null.
      *
      * @param message The message to use with the NullPointerException.
@@ -223,9 +251,13 @@ public final class ObjectUtils {
      * @throws NullPointerException if any object is null in objects
      */
     public static void requireNonNull(final String message, final Object... objects) {
-        if (objects == null) throw new NullPointerException(message);
+        if (objects == null) {
+            throw new NullPointerException(message);
+        }
         for (Object object : objects) {
-            if (object == null) throw new NullPointerException(message);
+            if (object == null) {
+                throw new NullPointerException(message);
+            }
         }
     }
 
